@@ -1,16 +1,28 @@
 import { v4 as uuidv4 } from 'uuid';
 import { GroqService } from './groqService.js';
 import { WebSearchService } from './webSearchService.js';
+import { WeatherService } from './weatherService.js';
+import { FlightService } from './flightService.js';
+import { HotelService } from './hotelService.js';
 import { logger } from '../utils/logger.js';
 
 export class ChatService {
     constructor() {
         this.groqService = new GroqService();
         this.webSearchService = new WebSearchService();
+        this.weatherService = new WeatherService();
+        this.flightService = new FlightService();
+        this.hotelService = new HotelService();
         this.conversations = new Map(); // In-memory storage for conversations
         this.SYSTEM_MESSAGE = {
             role: 'system',
-            content: 'You are a helpful assistant. When you need to search for current information or recent events, use the webSearch function. Always use the proper function calling format.'
+            content: `You are a helpful AI assistant with access to multiple tools:
+- webSearch: Search the web for current information and recent events
+- getWeather: Get current weather information for any location
+- searchFlights: Search for flight information and schedules
+- searchHotels: Find hotels and accommodations
+
+Use these tools when users ask relevant questions. Always provide helpful and accurate information.`
         };
     }
 
@@ -46,9 +58,16 @@ export class ChatService {
             });
 
             // Get LLM response with tools
+            const tools = [
+                this.webSearchService.getToolDefinition(),
+                this.weatherService.getToolDefinition(),
+                this.flightService.getToolDefinition(),
+                this.hotelService.getToolDefinition()
+            ];
+            
             const response = await this.groqService.createChatCompletion(
                 conversation.messages,
-                [this.webSearchService.getToolDefinition()]
+                tools
             );
 
             const choice = response.choices[0];
@@ -121,6 +140,29 @@ export class ChatService {
                     result = await this.webSearchService.search(
                         parsedArgs.query,
                         parsedArgs.num_results || 3
+                    );
+                    break;
+                case 'getWeather':
+                    result = await this.weatherService.getCurrentWeather(
+                        parsedArgs.location,
+                        parsedArgs.units || 'metric'
+                    );
+                    break;
+                case 'searchFlights':
+                    result = await this.flightService.searchFlights(
+                        parsedArgs.departure,
+                        parsedArgs.arrival,
+                        parsedArgs.date,
+                        parsedArgs.flight_number
+                    );
+                    break;
+                case 'searchHotels':
+                    result = await this.hotelService.searchHotels(
+                        parsedArgs.location,
+                        parsedArgs.checkin_date,
+                        parsedArgs.checkout_date,
+                        parsedArgs.adults,
+                        parsedArgs.rooms
                     );
                     break;
                 default:

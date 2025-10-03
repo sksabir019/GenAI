@@ -20,6 +20,11 @@ export const config = {
     // Tool configuration
     MAX_SEARCH_RESULTS: parseInt(process.env.MAX_SEARCH_RESULTS) || 5,
     
+    // Additional tool API keys
+    OPENWEATHER_API_KEY: process.env.OPENWEATHER_API_KEY,
+    AVIATIONSTACK_API_KEY: process.env.AVIATIONSTACK_API_KEY,
+    BOOKING_API_KEY: process.env.BOOKING_API_KEY,
+    
     // Security
     RATE_LIMIT_WINDOW: parseInt(process.env.RATE_LIMIT_WINDOW) || 900000, // 15 minutes
     RATE_LIMIT_MAX: parseInt(process.env.RATE_LIMIT_MAX) || 100,
